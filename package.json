@@ -1,0 +1,80 @@
+{
+  "name": "work-companion",
+  "productName": "Work Companion",
+  "version": "0.1.0",
+  "description": "Un petit chat de bureau qui t'aide à rester concentré",
+  "main": "src/main/main.js",
+  "author": "Lucas-lux",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "icons": "node scripts/make-icons.js",
+    "dist:win": "npm run icons && electron-builder --win",
+    "dist:mac": "npm run icons && electron-builder --mac"
+  },
+  "build": {
+    "appId": "app.workcompanion",
+    "productName": "Work Companion",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "!assets/reference/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "extension",
+        "to": "extension"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Work Companion",
+      "artifactName": "WorkCompanion-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "WorkCompanion-${version}-${arch}.${ext}",
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSAppleEventsUsageDescription": "Work Companion lit l'onglet actif de ton navigateur pour savoir si tu es sur un site interdit."
+      }
+    }
+  },
+  "dependencies": {
+    "jpeg-js": "^0.4.4",
+    "pngjs": "^7.0.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lucas-lux/work-companion.git"
+  }
+}

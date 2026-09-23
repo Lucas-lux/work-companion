@@ -1,0 +1,193 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+#pet {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: 132px;
+  height: 102px;
+  will-change: transform;
+}
+
+.flip { position: relative; width: 132px; height: 102px; transition: transform .2s ease; cursor: grab; }
+#pet[data-dir="-1"] .flip { transform: scaleX(-1); }
+#pet[data-mode="dangle"] .flip { cursor: grabbing; }
+.cat { width: 132px; height: 102px; }
+
+/* rendu pixel art : une bande d'images, on ne montre qu'une case à la fois */
+.sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+#pet.pixel[data-mode="happy"] .flip { animation: hop .45s ease-in-out 2; }
+#pet.pixel[data-mode="dangle"] .flip { animation: dangle 1s ease-in-out infinite; transform-origin: 50% 20%; }
+#pet.pixel[data-dir="-1"][data-mode="dangle"] .flip { animation: dangle-flip 1s ease-in-out infinite; }
+@keyframes dangle-flip { 0%, 100% { transform: scaleX(-1) rotate(-7deg); } 50% { transform: scaleX(-1) rotate(5deg); } }
+
+/* ---------- bulle ---------- */
+.bubble {
+  position: absolute;
+  bottom: 104px;
+  left: 0;
+  max-width: 250px;
+  width: max-content;
+  padding: 9px 13px 10px;
+  border-radius: 16px;
+  background: #fffdf9;
+  color: #2b2320;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: 0 6px 22px rgba(40, 25, 10, .18), 0 0 0 1.5px rgba(90, 58, 34, .14);
+  opacity: 0;
+  transform: translateY(6px) scale(.96);
+  transform-origin: 50% 100%;
+  transition: opacity .18s ease, transform .22s cubic-bezier(.3, 1.5, .5, 1);
+  pointer-events: none;
+}
+.bubble.show { opacity: 1; transform: none; pointer-events: auto; }
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: var(--tail, 50%);
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 1.5px 1.5px 0 rgba(90, 58, 34, .14);
+  border-radius: 0 0 3px 0;
+}
+.bubble.alert { background: #fff1ee; color: #8a2a1c; }
+.bubble.info { font-weight: 500; color: #5b4e46; }
+.bubble .bar { display: none; height: 4px; margin-top: 7px; border-radius: 4px; background: #f26b5b; transform-origin: 0 50%; }
+.bubble.alert .bar { display: block; animation: countdown linear forwards; }
+@keyframes countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ---------- effets ---------- */
+.fx { position: absolute; inset: 0; pointer-events: none; }
+.fx span {
+  position: absolute;
+  font-size: 16px;
+  animation: float-up 1.6s ease-out forwards;
+}
+@keyframes float-up {
+  0% { opacity: 0; transform: translate(0, 0) scale(.6); }
+  15% { opacity: 1; transform: translate(var(--dx, 0), -10px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--dx, 0) * 2), -70px) scale(.9); }
+}
+.fx .bang {
+  font-size: 28px;
+  font-weight: 900;
+  color: #f26b5b;
+  text-shadow: 0 2px 0 #fff, 0 0 8px #fff;
+  animation: bang .9s cubic-bezier(.3, 1.8, .5, 1) forwards;
+}
+@keyframes bang {
+  0% { opacity: 0; transform: scale(.2); }
+  30% { opacity: 1; transform: scale(1.2); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1) translateY(-8px); }
+}
+.fx .claw {
+  width: 34px;
+  height: 40px;
+  animation: claw .7s ease-out forwards;
+}
+.fx .claw i {
+  position: absolute;
+  width: 4px;
+  height: 38px;
+  border-radius: 3px;
+  background: linear-gradient(#f26b5b, #ffb199);
+  transform: rotate(28deg);
+}
+.fx .claw i:nth-child(2) { left: 11px; top: 2px; }
+.fx .claw i:nth-child(3) { left: 22px; top: 4px; }
+@keyframes claw {
+  0% { opacity: 0; clip-path: inset(0 0 100% 0); }
+  25% { opacity: 1; clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; }
+}
+.fx .zzz {
+  font-size: 15px;
+  font-weight: 800;
+  color: #8a7cc2;
+  animation: zzz 2.6s ease-in-out forwards;
+}
+@keyframes zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(.6) rotate(-8deg); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(26px, -46px) scale(1.2) rotate(10deg); }
+}
+
+/* ---------- modes ---------- */
+/* marche */
+#pet[data-mode="walk"] .leg-fl, #pet[data-mode="walk"] .leg-br { animation: step-a .52s ease-in-out infinite; }
+#pet[data-mode="walk"] .leg-fr, #pet[data-mode="walk"] .leg-bl { animation: step-b .52s ease-in-out infinite; }
+#pet[data-mode="walk"] .cat { animation: bob .26s ease-in-out infinite alternate; }
+@keyframes step-a { 0%, 100% { transform: rotate(20deg); } 50% { transform: rotate(-20deg); } }
+@keyframes step-b { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(20deg); } }
+@keyframes bob { to { transform: translateY(-2.5px); } }
+
+/* course (alerte) */
+#pet[data-mode="run"] .leg-fl, #pet[data-mode="run"] .leg-fr { animation: run-a .3s ease-in-out infinite; }
+#pet[data-mode="run"] .leg-bl, #pet[data-mode="run"] .leg-br { animation: run-b .3s ease-in-out infinite; }
+#pet[data-mode="run"] .cat { animation: gallop .3s ease-in-out infinite; }
+#pet[data-mode="run"] .tail { animation: none; transform: rotate(38deg); }
+#pet[data-mode="run"] .head-g { animation: none; transform: rotate(4deg); }
+@keyframes run-a { 0%, 100% { transform: rotate(38deg); } 50% { transform: rotate(-30deg); } }
+@keyframes run-b { 0%, 100% { transform: rotate(-38deg); } 50% { transform: rotate(30deg); } }
+@keyframes gallop { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-3deg); } }
+
+/* alerte : poils hérissés, sourcils froncés */
+#pet[data-mode="alert"] .brows, #pet[data-mode="run"] .brows, #pet[data-mode="swipe"] .brows { display: inline; }
+#pet[data-mode="alert"] .tail-line, #pet[data-mode="swipe"] .tail-line { stroke-width: 17; }
+#pet[data-mode="alert"] .tail-fur, #pet[data-mode="swipe"] .tail-fur { stroke-width: 12.5; }
+#pet[data-mode="alert"] .tail { animation: tail-angry .35s ease-in-out infinite alternate; }
+#pet[data-mode="alert"] .cat { animation: hiss .5s ease-in-out infinite alternate; }
+#pet[data-mode="alert"] .ears { transform: scaleY(1.08) translateY(-1px); transform-origin: 50% 100%; }
+@keyframes tail-angry { from { transform: rotate(-4deg); } to { transform: rotate(6deg); } }
+@keyframes hiss { from { transform: scaleY(1); } to { transform: scaleY(1.04) translateY(-1px); } }
+
+/* coup de patte */
+#pet[data-mode="swipe"] .leg-fr { animation: swipe .2s ease-in-out infinite alternate; }
+#pet[data-mode="swipe"] .all { transform: rotate(-4deg); transform-box: view-box; transform-origin: 50px 92px; }
+@keyframes swipe { from { transform: rotate(-10deg); } to { transform: rotate(-105deg); } }
+
+/* content */
+#pet[data-mode="happy"] .eyes-open { display: none; }
+#pet[data-mode="happy"] .eyes-happy { display: inline; }
+#pet[data-mode="happy"] .tail { animation: cat-tail .5s ease-in-out infinite; }
+#pet[data-mode="happy"] .cat { animation: hop .45s ease-in-out 2; }
+@keyframes hop { 50% { transform: translateY(-9px); } }
+
+/* dodo */
+#pet[data-mode="sleep"] .eyes-open { display: none; }
+#pet[data-mode="sleep"] .eyes-closed { display: inline; }
+#pet[data-mode="sleep"] .leg { opacity: 0; }
+#pet[data-mode="sleep"] .all { transform: translateY(10px); }
+#pet[data-mode="sleep"] .body-g { animation-duration: 4.5s; }
+#pet[data-mode="sleep"] .head-g { animation: none; transform: rotate(10deg) translateY(4px); }
+#pet[data-mode="sleep"] .tail { animation: none; transform: rotate(-70deg) translate(4px, 6px); }
+
+/* porté par la souris */
+#pet[data-mode="dangle"] .all { animation: dangle 1s ease-in-out infinite; transform-box: view-box; transform-origin: 95px 30px; }
+#pet[data-mode="dangle"] .leg { animation: step-a .6s ease-in-out infinite; }
+#pet[data-mode="dangle"] .eyes-open { animation: none; transform: scale(1.15); }
+@keyframes dangle { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(5deg); } }
+
+/* focus : casque sur les oreilles */
+#pet[data-focus="focus"] .headphones { display: inline; }

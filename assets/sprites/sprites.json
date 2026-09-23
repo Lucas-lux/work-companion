@@ -1,0 +1,11 @@
+{
+  "displayHeight": 96,
+  "animations": {
+    "walk":  { "height": 96,  "fps": 10 },
+    "idle":  { "height": 100, "pick": [2, 3, 4, 6], "fps": 4 },
+    "sleep": { "height": 100, "fps": 2 },
+    "click": { "height": 104, "fps": 9, "loop": false },
+    "happy": { "height": 118, "fps": 7 },
+    "alert": { "height": 118, "fps": 6 }
+  }
+}

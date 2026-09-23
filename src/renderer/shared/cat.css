@@ -1,0 +1,36 @@
+/* Apparence et animations "au repos" du chat (partagées) */
+.cat {
+  --fur: #f7a74c; --stripe: #dd7d2a; --belly: #fde6c8; --line: #5a3a22;
+  --eye: #2b1d17; --face: #5a3a22; --ear-in: #ffb3b8;
+  display: block;
+  overflow: visible;
+}
+.cat * { transform-box: fill-box; }
+.cat .shadow { fill: rgba(0, 0, 0, .16); }
+.cat .fur { fill: var(--fur); stroke: var(--line); stroke-width: 2.2; stroke-linejoin: round; }
+.cat .belly { fill: var(--belly); }
+.cat .ear-in { fill: var(--ear-in); }
+.cat .stripe { fill: none; stroke: var(--stripe); stroke-width: 3; stroke-linecap: round; }
+.cat .eye { fill: var(--eye); }
+.cat .shine { fill: #fff; }
+.cat .cheek { fill: #ff9aa8; opacity: .55; }
+.cat .nose { fill: #ff8b9b; }
+.cat .face { fill: none; stroke: var(--face); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cat .whiskers { stroke-width: 1.1; opacity: .8; }
+.cat .tail-line { fill: none; stroke: var(--line); stroke-width: 12.4; stroke-linecap: round; transition: stroke-width .2s; }
+.cat .tail-fur { fill: none; stroke: var(--fur); stroke-width: 8; stroke-linecap: round; transition: stroke-width .2s; }
+.cat .hp-band { fill: none; stroke: #3d3a48; stroke-width: 3.2; stroke-linecap: round; }
+.cat .hp-cup { fill: #6c63ff; stroke: #3d3a48; stroke-width: 1.6; }
+
+.cat .eyes-closed, .cat .eyes-happy, .cat .brows, .cat .headphones { display: none; }
+
+.cat .tail { transform-box: view-box; transform-origin: 33px 66px; animation: cat-tail 3.2s ease-in-out infinite; }
+.cat .body-g { transform-origin: 50% 100%; animation: cat-breathe 3s ease-in-out infinite; }
+.cat .head-g { transform-box: view-box; transform-origin: 88px 62px; animation: cat-head 7s ease-in-out infinite; }
+.cat .eyes-open { transform-origin: 50% 50%; animation: cat-blink 4.6s infinite; }
+.cat .leg { transform-origin: 50% 8%; }
+
+@keyframes cat-tail { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(9deg); } }
+@keyframes cat-breathe { 50% { transform: scaleY(1.035); } }
+@keyframes cat-head { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(-3deg); } 60% { transform: rotate(2deg); } }
+@keyframes cat-blink { 0%, 93%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.08); } }

@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Work Companion</title>
+  <link rel="stylesheet" href="../shared/cat.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <aside class="side">
+    <div class="brand">
+      <div class="avatar" id="avatar"></div>
+      <div>
+        <div class="cat-name" id="catName">Mochi</div>
+        <div class="cat-status" id="catStatus">veille sur toi</div>
+      </div>
+    </div>
+    <nav>
+      <button data-page="today" class="active">Aujourd'hui</button>
+      <button data-page="focus">Focus</button>
+      <button data-page="rules">Blocages</button>
+      <button data-page="history">Historique</button>
+      <button data-page="settings">Réglages</button>
+    </nav>
+    <div class="now" id="now">
+      <div class="now-lbl">En ce moment</div>
+      <div class="now-val"><span class="dot"></span><span id="nowLabel">—</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ================= AUJOURD'HUI ================= -->
+    <section class="page active" id="page-today">
+      <header class="head">
+        <div>
+          <h1 id="greet">Bonjour</h1>
+          <p class="sub" id="dateLabel"></p>
+        </div>
+        <button class="btn primary" id="quickFocus">Lancer un focus</button>
+      </header>
+
+      <div class="stats">
+        <div class="card score">
+          <svg viewBox="0 0 120 120" class="ring">
+            <circle cx="60" cy="60" r="50" class="ring-bg"/>
+            <circle cx="60" cy="60" r="50" class="ring-fg" id="scoreRing"/>
+          </svg>
+          <div class="score-val"><b id="scoreVal">—</b><span>score focus</span></div>
+        </div>
+        <div class="card stat work">
+          <span class="lbl"><i class="sw"></i>Travail</span>
+          <b id="tWork">0 min</b>
+          <div class="goal"><i id="goalBar"></i></div>
+          <small id="goalLabel">objectif 4 h</small>
+        </div>
+        <div class="card stat distraction">
+          <span class="lbl"><i class="sw"></i>Distraction</span>
+          <b id="tDist">0 min</b>
+          <small id="distHint">&nbsp;</small>
+        </div>
+        <div class="card stat other">
+          <span class="lbl"><i class="sw"></i>Autre</span>
+          <b id="tOther">0 min</b>
+          <small>temps non classé</small>
+        </div>
+        <div class="card stat mini">
+          <span class="lbl">Fermetures</span>
+          <b id="tBlocks">0</b>
+          <small id="blocksHint">distractions chassées</small>
+        </div>
+        <div class="card stat mini">
+          <span class="lbl">Sessions focus</span>
+          <b id="tFocus">0</b>
+          <small id="focusHint">0 min en focus</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Ta journée</h2>
+          <div class="legend"><span class="work">Travail</span><span class="distraction">Distraction</span><span class="other">Autre</span></div>
+        </div>
+        <div class="timeline" id="timeline"></div>
+        <div class="axis" id="axis"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Activités</h2>
+          <p class="hint">Mal classé ? Change la catégorie : ton chat s'en souviendra.</p>
+        </div>
+        <ul class="items" id="items"></ul>
+      </div>
+    </section>
+
+    <!-- ================= FOCUS ================= -->
+    <section class="page" id="page-focus">
+      <header class="head">
+        <div>
+          <h1>Focus</h1>
+          <p class="sub">Une session à la fois. Ton chat monte la garde.</p>
+        </div>
+      </header>
+      <div class="focus-grid">
+        <div class="card focus-card">
+          <div class="timer">
+            <svg viewBox="0 0 220 220" class="ring big">
+              <circle cx="110" cy="110" r="96" class="ring-bg"/>
+              <circle cx="110" cy="110" r="96" class="ring-fg" id="fRing"/>
+            </svg>
+            <div class="timer-in">
+              <div class="timer-kind" id="fKind">Prêt·e ?</div>
+              <div class="timer-time" id="fTime">25:00</div>
+            </div>
+          </div>
+          <div class="presets" id="presets">
+            <button data-min="15">15 min</button>
+            <button data-min="25">25 min</button>
+            <button data-min="45">45 min</button>
+            <button data-min="60">1 h</button>
+            <button data-min="90">1 h 30</button>
+          </div>
+          <div class="actions">
+            <button class="btn primary big" id="fStart">Lancer le focus</button>
+            <button class="btn big" id="fStop" hidden>Arrêter</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Pendant un focus</h2>
+          <ul class="perks" id="perks"></ul>
+          <div class="focus-today">
+            <div><b id="fSessions">0</b><span>sessions aujourd'hui</span></div>
+            <div><b id="fMinutes">0 min</b><span>en focus</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BLOCAGES ================= -->
+    <section class="page" id="page-rules">
+      <header class="head">
+        <div>
+          <h1>Blocages</h1>
+          <p class="sub">Ce que ton chat surveille, et ce qu'il ferme d'un coup de patte.</p>
+        </div>
+        <label class="switch labeled">
+          <input type="checkbox" id="blockingEnabled">
+          <span class="track"></span>
+          <span>Blocages actifs</span>
+        </label>
+      </header>
+
+      <div class="card snooze-card">
+        <div>
+          <h2>Besoin d'une exception ?</h2>
+          <p class="hint" id="snoozeLabel">Mets les blocages en pause quelques minutes.</p>
+        </div>
+        <div class="row" id="snoozeBtns">
+          <button class="btn" data-snooze="5">5 min</button>
+          <button class="btn" data-snooze="15">15 min</button>
+          <button class="btn" data-snooze="30">30 min</button>
+          <button class="btn" data-snooze="0" id="snoozeOff" hidden>Réactiver maintenant</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Sites et applications</h2>
+          <div class="modes-legend">
+            <span><b>Toujours</b> fermé dès qu'il est ouvert</span>
+            <span><b>Pendant le focus</b> fermé seulement en session</span>
+            <span><b>Compter</b> juste comptabilisé en distraction</span>
+          </div>
+        </div>
+        <div class="rules" id="rules"></div>
+        <form class="add-rule" id="addRule">
+          <select name="type">
+            <option value="site">Site</option>
+            <option value="app">App</option>
+          </select>
+          <input name="label" placeholder="Nom (ex. LinkedIn)">
+          <input name="pattern" placeholder="Adresse ou app (ex. linkedin.com)" required>
+          <input name="keywords" placeholder="Mots du titre (optionnel)">
+          <select name="mode">
+            <option value="block">Toujours</option>
+            <option value="focus">Pendant le focus</option>
+            <option value="track">Compter</option>
+          </select>
+          <button class="btn primary" type="submit">Ajouter</button>
+        </form>
+      </div>
+
+      <div class="card ext-card">
+        <div class="card-head">
+          <h2>Extension navigateur</h2>
+          <span class="pill" id="extStatus">Non connectée</span>
+        </div>
+        <p class="hint" id="extWhy">
+          <b>Optionnelle.</b> L'app lit déjà l'adresse de l'onglet actif directement dans la fenêtre du navigateur.
+          L'extension sert de secours si ton navigateur n'est pas reconnu, et permet de fermer l'onglet sans passer par Ctrl+W.
+        </p>
+        <ol class="steps">
+          <li>Ouvre <code>chrome://extensions</code> (ou <code>edge://extensions</code>, <code>brave://extensions</code>)</li>
+          <li>Active le <b>mode développeur</b> (en haut à droite)</li>
+          <li>Clique sur <b>« Charger l'extension non empaquetée »</b> et choisis le dossier de l'extension</li>
+          <li>Firefox : <code>about:debugging</code> → « Ce Firefox » → « Charger un module temporaire » → <code>manifest.json</code></li>
+        </ol>
+        <button class="btn" id="openExt">Ouvrir le dossier de l'extension</button>
+      </div>
+    </section>
+
+    <!-- ================= HISTORIQUE ================= -->
+    <section class="page" id="page-history">
+      <header class="head">
+        <div>
+          <h1>Historique</h1>
+          <p class="sub">Tes progrès jour après jour.</p>
+        </div>
+        <div class="seg" id="histRange">
+          <button data-days="7" class="active">7 jours</button>
+          <button data-days="30">30 jours</button>
+        </div>
+      </header>
+      <div class="stats three">
+        <div class="card stat"><span class="lbl">Travail moyen / jour</span><b id="hAvg">—</b></div>
+        <div class="card stat"><span class="lbl">Meilleure journée</span><b id="hBest">—</b><small id="hBestDay">&nbsp;</small></div>
+        <div class="card stat"><span class="lbl">Distractions fermées</span><b id="hBlocks">0</b></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>Travail vs distraction</h2>
+          <div class="legend"><span class="work">Travail</span><span class="distraction">Distraction</span></div>
+        </div>
+        <div class="chart" id="chart"></div>
+      </div>
+    </section>
+
+    <!-- ================= RÉGLAGES ================= -->
+    <section class="page" id="page-settings">
+      <header class="head">
+        <div>
+          <h1>Réglages</h1>
+          <p class="sub">Tout est enregistré automatiquement.</p>
+        </div>
+      </header>
+
+      <div class="settings">
+        <div class="card">
+          <h2>Compagnon</h2>
+          <div class="setting">
+            <div class="s-text"><b>Son nom</b><small>Il apparaît dans ses bulles et dans la barre des tâches</small></div>
+            <input class="ctl" id="s-catName" data-key="catName" maxlength="24">
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Afficher le chat sur le bureau</b></div>
+            <label class="switch"><input type="checkbox" data-key="companionVisible"><span class="track"></span></label>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Le laisser se promener</b><small>Sinon il reste là où tu le poses</small></div>
+            <label class="switch"><input type="checkbox" data-key="wander"><span class="track"></span></label>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Délai avant de fermer une distraction</b><small>Le temps qu'il te laisse pour partir de toi-même</small></div>
+            <div class="inline"><input type="number" min="1" max="20" data-key="graceSeconds" data-type="number"><span>s</span></div>
+          </div>
+          <div class="setting stack">
+            <div class="s-text"><b>Sprites</b><small id="spriteStatus">Chat par défaut.</small></div>
+            <div class="row">
+              <button class="btn small" id="openSprites">Ouvrir le dossier des sprites</button>
+              <button class="btn small" id="reloadSprites">Recharger</button>
+            </div>
+            <small class="hint">Pour remplacer les animations : dépose <code>idle.png</code>, <code>walk.png</code>, <code>sleep.png</code>, <code>click.png</code>… dans ce dossier, puis recharge. Le format est décrit dans le fichier LISEZMOI qui s'y trouve.</small>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Focus</h2>
+          <div class="setting">
+            <div class="s-text"><b>Durée d'une session</b></div>
+            <div class="inline"><input type="number" min="5" max="240" data-key="focusMinutes" data-type="number"><span>min</span></div>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Durée de la pause</b><small>Enchaînée après chaque session terminée</small></div>
+            <div class="inline"><input type="number" min="1" max="60" data-key="breakMinutes" data-type="number"><span>min</span></div>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Enchaîner automatiquement sur une pause</b></div>
+            <label class="switch"><input type="checkbox" data-key="autoBreak"><span class="track"></span></label>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Couper les notifications pendant le focus</b><small><button class="link" id="openNotif" type="button">Ouvrir les réglages de notifications</button></small></div>
+            <label class="switch"><input type="checkbox" data-key="dndOnFocus"><span class="track"></span></label>
+          </div>
+          <div class="setting stack">
+            <div class="s-text"><b>Apps fermées au début d'un focus</b><small>Séparées par des virgules. Elles sont fermées de force : enregistre ton travail avant.</small></div>
+            <input class="ctl wide" data-key="quitAppsOnFocus" data-type="list" placeholder="discord, slack, whatsapp">
+          </div>
+          <div class="setting stack mac-only">
+            <div class="s-text"><b>Raccourcis macOS (mode Concentration)</b><small>Crée deux raccourcis dans l'app Raccourcis et écris leurs noms ici.</small></div>
+            <div class="two">
+              <input class="ctl" data-key="macFocusOn" placeholder="Raccourci d'activation">
+              <input class="ctl" data-key="macFocusOff" placeholder="Raccourci de désactivation">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Suivi du temps</h2>
+          <div class="setting">
+            <div class="s-text"><b>Objectif de travail quotidien</b></div>
+            <div class="inline"><input type="number" min="15" max="960" step="15" data-key="dailyGoalMinutes" data-type="number"><span>min</span></div>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Me considérer absent·e après</b><small>Le temps sans clavier ni souris avant que le chat s'endorme</small></div>
+            <select class="ctl" data-key="idleSeconds" data-type="number">
+              <option value="60">1 minute</option>
+              <option value="120">2 minutes</option>
+              <option value="300">5 minutes</option>
+              <option value="600">10 minutes</option>
+            </select>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Me rappeler de faire des pauses</b><small>Toutes les 50 minutes de travail d'affilée</small></div>
+            <label class="switch"><input type="checkbox" data-key="breakReminders"><span class="track"></span></label>
+          </div>
+          <div class="setting">
+            <div class="s-text"><b>Lancer au démarrage de l'ordinateur</b></div>
+            <label class="switch"><input type="checkbox" data-key="launchAtLogin"><span class="track"></span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Ce qui compte comme du travail</h2>
+          <div class="setting stack">
+            <div class="s-text"><b>Applications</b><small>Noms de processus, séparés par des virgules (ex. <code>code</code>, <code>figma</code>)</small></div>
+            <textarea rows="4" data-key="productiveApps" data-type="list"></textarea>
+          </div>
+          <div class="setting stack">
+            <div class="s-text"><b>Sites</b><small>Domaines, séparés par des virgules</small></div>
+            <textarea rows="4" data-key="productiveSites" data-type="list"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../shared/cat.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
