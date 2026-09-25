@@ -37,6 +37,10 @@ L'app n'est pas signée par un certificat payant, donc le système affiche un av
 - **Sessions focus** (façon Pomodoro) : pendant une session, il bloque en plus les sites marqués « pendant le focus »,
   coupe les notifications et ferme les apps qui te dérangent (Discord, WhatsApp…). Une pause est enchaînée automatiquement.
 - **Rappels de pause** après 50 minutes de travail d'affilée.
+- **Démarre avec l'ordinateur** (activé par défaut) : le chat s'installe dès l'ouverture de session et te souhaite
+  une bonne journée. Réglable dans Réglages → Compagnon ou via la case « Lancer au démarrage » du menu de l'icône.
+  Si Windows ou macOS bloque l'app au démarrage, les réglages le signalent et proposent de la réactiver.
+  La désinstallation retire aussi l'entrée de démarrage.
 - Tout reste **en local** : rien n'est envoyé sur Internet.
 
 ## Lancer en développement

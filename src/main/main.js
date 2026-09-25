@@ -17,6 +17,8 @@ const COMPANION_HEIGHT = 240;
 const REMINDER_EVERY = 50 * 60;
 const RENDERER = path.join(__dirname, '..', 'renderer');
 const PRELOAD = path.join(__dirname, '..', 'preload');
+// Argument ajouté à la commande de démarrage automatique : permet de savoir qu'on a été lancé à l'ouverture de session
+const LOGIN_ARGS = ['--autostart'];
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -38,6 +40,8 @@ let nextReminder = REMINDER_EVERY;
 let dndActive = false;
 let busy = false;
 let lastTick = Date.now();
+let launchedAtLogin = process.argv.includes(LOGIN_ARGS[0]);
+let greeted = false; // le chat ne dit bonjour qu'une fois par lancement
 
 app.on('second-instance', () => openDashboard());
 app.on('window-all-closed', () => { /* on reste dans la barre des tâches */ });
@@ -47,6 +51,9 @@ app.whenReady().then(init);
 async function init() {
   if (process.platform === 'darwin' && app.dock) app.dock.hide();
   if (process.platform === 'win32') app.setAppUserModelId('app.workcompanion');
+  if (process.platform === 'darwin') {
+    try { launchedAtLogin = launchedAtLogin || !!app.getLoginItemSettings().wasOpenedAtLogin; } catch { /* non disponible */ }
+  }
 
   store = new Store(app.getPath('userData'));
   platform = createPlatform(app.getPath('userData'), () => store.settings);
@@ -427,6 +434,13 @@ function buildMenu() {
     { type: 'separator' },
     { label: 'Tableau de bord', click: openDashboard },
     { label: companionWin ? `Cacher ${store.settings.catName}` : `Afficher ${store.settings.catName}`, click: () => setCompanionVisible(!companionWin) },
+    {
+      label: app.isPackaged ? 'Lancer au démarrage' : 'Lancer au démarrage (version installée uniquement)',
+      type: 'checkbox',
+      checked: !!store.settings.launchAtLogin,
+      enabled: app.isPackaged,
+      click: (item) => saveSettings({ launchAtLogin: item.checked }),
+    },
     { type: 'separator' },
     { label: 'Quitter', click: () => app.quit() },
   ]);
@@ -439,20 +453,81 @@ function refreshTray() {
   tray.setContextMenu(buildMenu());
 }
 
-function applyLoginItem() {
-  // En développement, l'exécutable est electron.exe : on n'enregistre rien
-  if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!store.settings.launchAtLogin });
+// ---------------------------------------------------------------- démarrage automatique
+
+function loginItemOptions() {
+  // Windows : entrée "Run" du registre avec le chemin de l'exe et --autostart ; macOS : élément d'ouverture
+  return process.platform === 'win32' ? { path: process.execPath, args: LOGIN_ARGS } : {};
+}
+
+// Version de la commande enregistrée : à incrémenter si LOGIN_ARGS change, pour réenregistrer une fois
+const LOGIN_ITEM_REV = 2;
+
+// Entrée de démarrage de cette app, ou null. Sous Windows, Electron relit mal les arguments
+// de la commande (openAtLogin reste faux), donc on repère l'entrée par le chemin de l'exe.
+function currentLoginItem() {
+  const s = app.getLoginItemSettings(loginItemOptions());
+  if (process.platform !== 'win32') return s.openAtLogin ? { enabled: s.status !== 'requires-approval', status: s.status } : null;
+  const exe = process.execPath.toLowerCase();
+  return (s.launchItems || []).find((i) => String(i.path).toLowerCase() === exe) || null;
+}
+
+// force = true quand l'utilisateur vient de changer le réglage : on écrase alors aussi un blocage
+// fait dans le Gestionnaire des tâches. Au lancement, on n'écrit que si l'entrée manque ou date
+// d'une ancienne version, et on garde l'état activé/désactivé choisi dans Windows.
+function applyLoginItem(force = false) {
+  if (!app.isPackaged) return; // en développement, l'exécutable est electron.exe : on n'enregistre rien
+  const want = !!store.settings.launchAtLogin;
+  try {
+    const item = currentLoginItem();
+    const upToDate = !!item && store.settings.loginItemRev === LOGIN_ITEM_REV;
+    if (!force && (want ? upToDate : !item)) return;
+    const enabled = want && (force || !item || item.enabled !== false);
+    app.setLoginItemSettings({ ...loginItemOptions(), openAtLogin: want, enabled });
+    store.setSettings({ loginItemRev: want ? LOGIN_ITEM_REV : 0 });
+  } catch (e) {
+    console.warn('[login-item]', e.message);
+  }
+}
+
+// État réel du démarrage automatique, pour l'afficher dans les réglages
+function loginItemStatus() {
+  const platform = process.platform;
+  if (!app.isPackaged) return { state: 'dev', platform };
+  if (!store.settings.launchAtLogin) return { state: 'off', platform };
+  try {
+    const item = currentLoginItem();
+    if (!item) return { state: 'missing', platform };
+    // Windows : désactivée dans le Gestionnaire des tâches ; macOS 13+ : en attente d'autorisation
+    if (item.enabled === false) return { state: 'blocked', platform };
+    return { state: 'on', platform };
+  } catch {
+    return { state: 'unknown', platform };
+  }
+}
+
+function openStartupSettings() {
+  const url = process.platform === 'darwin'
+    ? 'x-apple.systempreferences:com.apple.LoginItems-Settings.extension'
+    : 'ms-settings:startupapps';
+  return shell.openExternal(url);
 }
 
 // ---------------------------------------------------------------- IPC
 
-ipcMain.handle('companion:init', () => ({
-  settings: store.settings,
-  focus: focus.snapshot(),
-  idle,
-  stats: store.summary(),
-  sprites,
-}));
+ipcMain.handle('companion:init', () => {
+  // Salut une seule fois par lancement (pas à chaque rechargement des sprites)
+  const greeting = greeted ? null : (launchedAtLogin ? 'login' : 'start');
+  greeted = true;
+  return {
+    settings: store.settings,
+    focus: focus.snapshot(),
+    idle,
+    stats: store.summary(),
+    sprites,
+    greeting,
+  };
+});
 ipcMain.on('companion:ignore', (_e, ignore) => {
   if (companionWin) companionWin.setIgnoreMouseEvents(!!ignore, { forward: true });
 });
@@ -486,6 +561,9 @@ ipcMain.handle('dash:openExtension', () => {
   return shell.openPath(dir);
 });
 ipcMain.handle('dash:openNotifSettings', () => platform.openNotificationSettings());
+ipcMain.handle('dash:loginItem', () => loginItemStatus());
+ipcMain.handle('dash:fixLoginItem', () => { applyLoginItem(true); return loginItemStatus(); });
+ipcMain.handle('dash:openStartupSettings', () => openStartupSettings());
 ipcMain.handle('dash:openSprites', () => {
   const dir = userSpriteDir();
   fs.mkdirSync(dir, { recursive: true });
@@ -518,10 +596,12 @@ function saveSettings(patch) {
   const s = store.setSettings(clean);
   store.save();
   if ('companionVisible' in clean && clean.companionVisible !== !!companionWin) setCompanionVisible(clean.companionVisible);
-  if ('launchAtLogin' in clean) applyLoginItem();
+  if ('launchAtLogin' in clean) applyLoginItem(true);
   if ('bridgePort' in clean && clean.bridgePort !== before.bridgePort) bridge.start(clean.bridgePort);
   if ('coat' in clean && tray) tray.setImage(trayImage());
   sendCompanion('settings', s);
+  // le réglage peut aussi changer depuis le menu de l'icône : on tient le tableau de bord à jour
+  if (dashboardWin && !dashboardWin.isDestroyed()) dashboardWin.webContents.send('d:settings', { settings: s, loginItem: loginItemStatus() });
   refreshTray();
   return s;
 }

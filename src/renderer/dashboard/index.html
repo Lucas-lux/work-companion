@@ -249,6 +249,17 @@
         <div class="card">
           <h2>Compagnon</h2>
           <div class="setting">
+            <div class="s-text">
+              <b>Lancer au démarrage de l'ordinateur</b>
+              <small class="login-status" id="loginStatus">Ton chat s'installe dès l'ouverture de ta session.</small>
+              <span class="row login-actions" id="loginActions" hidden>
+                <button class="btn small" id="fixLogin" type="button">Réactiver</button>
+                <button class="link" id="openStartup" type="button">Ouvrir les applications de démarrage</button>
+              </span>
+            </div>
+            <label class="switch"><input type="checkbox" data-key="launchAtLogin"><span class="track"></span></label>
+          </div>
+          <div class="setting">
             <div class="s-text"><b>Son nom</b><small>Il apparaît dans ses bulles et dans la barre des tâches</small></div>
             <input class="ctl" id="s-catName" data-key="catName" maxlength="24">
           </div>
@@ -323,10 +334,6 @@
           <div class="setting">
             <div class="s-text"><b>Me rappeler de faire des pauses</b><small>Toutes les 50 minutes de travail d'affilée</small></div>
             <label class="switch"><input type="checkbox" data-key="breakReminders"><span class="track"></span></label>
-          </div>
-          <div class="setting">
-            <div class="s-text"><b>Lancer au démarrage de l'ordinateur</b></div>
-            <label class="switch"><input type="checkbox" data-key="launchAtLogin"><span class="track"></span></label>
           </div>
         </div>
 

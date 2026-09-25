@@ -377,7 +377,42 @@
     renderSettings();
     renderSide();
     renderFocus();
+    if ('launchAtLogin' in patch) refreshLoginItem();
   }
+
+  // ------------------------------------------------------------ démarrage automatique
+
+  const LOGIN_TEXT = {
+    on: () => `Actif : ${S.settings.catName} se lancera à la prochaine ouverture de session.`,
+    off: () => `Désactivé : tu devras lancer ${S.settings.catName} toi-même.`,
+    dev: () => "Disponible uniquement dans la version installée de l'app (pas avec npm start).",
+    blocked: (p) => p === 'darwin'
+      ? 'Bloqué par macOS : autorise Work Companion dans Réglages Système → Général → Ouverture.'
+      : 'Désactivé dans Windows (Gestionnaire des tâches → Applications de démarrage).',
+    missing: () => "Pas encore enregistré auprès du système.",
+    unknown: () => "État inconnu : le système n'a pas répondu.",
+  };
+
+  function renderLoginItem(status) {
+    if (!status) return;
+    const el = $('#loginStatus');
+    el.textContent = (LOGIN_TEXT[status.state] || LOGIN_TEXT.unknown)(status.platform);
+    const problem = status.state === 'blocked' || status.state === 'missing';
+    el.className = 'login-status' + (problem ? ' warn' : status.state === 'on' ? ' ok' : '');
+    $('#loginActions').hidden = !problem;
+    // Sur macOS on ne peut pas débloquer à la place de l'utilisateur : seul le lien vers les réglages est utile
+    $('#fixLogin').hidden = status.platform === 'darwin' && status.state === 'blocked';
+    $('[data-key="launchAtLogin"]').disabled = status.state === 'dev';
+  }
+
+  async function refreshLoginItem() {
+    renderLoginItem(await wc.loginItem());
+  }
+
+  $('#fixLogin').addEventListener('click', async () => renderLoginItem(await wc.fixLoginItem()));
+  $('#openStartup').addEventListener('click', () => wc.openStartupSettings());
+  // L'utilisateur a pu changer ça dans les réglages du système entre-temps
+  window.addEventListener('focus', () => { if (S) refreshLoginItem(); });
 
   for (const input of $$('[data-key]')) {
     input.addEventListener('change', () => {
@@ -425,6 +460,15 @@
     renderRules();
     renderSprites();
     renderLive();
+    refreshLoginItem();
+  });
+
+  // Réglage modifié ailleurs (menu de l'icône)
+  wc.onSettings(({ settings, loginItem }) => {
+    if (!S) return;
+    S.settings = settings;
+    renderSettings();
+    renderLoginItem(loginItem);
   });
 
   wc.onState((live) => {

@@ -40,7 +40,9 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Work Companion",
-      "artifactName": "WorkCompanion-Setup-${version}.${ext}"
+      "artifactName": "WorkCompanion-Setup-${version}.${ext}",
+      "include": "build/installer.nsh",
+      "runAfterFinish": true
     },
     "mac": {
       "target": [

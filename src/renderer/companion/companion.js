@@ -395,7 +395,7 @@
 
   // ------------------------------------------------------------ démarrage
 
-  api.init().then(({ settings, focus, idle, stats, sprites }) => {
+  api.init().then(({ settings, focus, idle, stats, sprites, greeting }) => {
     setupRenderer(sprites);
     applySettings(settings);
     applyFocus(focus);
@@ -407,8 +407,12 @@
     render();
     requestAnimationFrame(frame);
     scheduleWander();
-    setTimeout(() => {
-      if (!S.idle) say(`Coucou ! Je suis ${settings.catName || 'Mochi'}, je veille sur ta concentration 🐾`, 5000);
-    }, 900);
+    const name = settings.catName || 'Mochi';
+    const hello = {
+      // lancé automatiquement à l'ouverture de session
+      login: `Bonjour ! ${name} est au poste, bonne journée 🐾`,
+      start: `Coucou ! Je suis ${name}, je veille sur ta concentration 🐾`,
+    }[greeting];
+    if (hello) setTimeout(() => { if (!S.idle) say(hello, 5000); }, greeting === 'login' ? 2500 : 900);
   });
 })();
